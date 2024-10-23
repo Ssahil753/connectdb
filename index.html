@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            position: relative;
+        }
+        
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        
+        .editable:hover {
+            background-color: #f0f0f0;
+            cursor: text;
+        }
+        
+        .editable:focus {
+            outline: 2px solid #007bff;
+            background-color: #fff;
+        }
+        
+        button {
+            margin: 10px 5px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            padding: 6px 12px;
+            margin: 0;
+        }
+
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        select {
+            padding: 5px;
+            width: 100%;
+            border: none;
+            background: transparent;
+        }
+
+        .date-cell {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="addRow()">Add New Row</button>
+    <table id="projectTable">
+        <thead>
+            <tr>
+                <th>Sr. No</th>
+                <th>Date</th>
+                <th>Project Name</th>
+                <th>Subject</th>
+                <th>Sent To</th>
+                <th>Sent By</th>
+                <th>Mode By</th>
+                <th>Letter No</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        let letterCounter = 1;
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        function getCurrentGMTDate() {
+            const date = new Date();
+            return date.toISOString().split('T')[0];
+        }
+
+        function getLetterNumber(serialNumber) {
+            const date = new Date();
+            const month = date.toLocaleString('default', { month: 'short' });
+            const year = date.getFullYear();
+            const fiscalYear = `${year}-${(year + 1).toString().slice(-2)}`;
+            return `CEINSYS/OPR/${fiscalYear}/${month.toUpperCase()}/${String(serialNumber).padStart(3, '0')}`;
+        }
+
+        function createModeBySelect() {
+            const select = document.createElement('select');
+            const options = ['By Hand', 'By Email'];
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            });
+            return select;
+        }
+
+        function addRow() {
+            const table = document.getElementById('projectTable');
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const rowCount = tbody.getElementsByTagName('tr').length + 1; // Updated for correct serial number
+            const newRow = document.createElement('tr');
+            const columns = table.getElementsByTagName('th').length - 1; // -1 for action column
+            
+            for (let i = 0; i < columns; i++) {
+                const cell = document.createElement('td');
+                cell.className = 'editable';
+                
+                switch(i) {
+                    case 0: // Sr. No
+                        cell.textContent = rowCount; // Set serial number
+                        cell.contentEditable = true; // Make this editable
+                        break;
+                    case 1: // Date
+                        cell.textContent = getCurrentGMTDate();
+                        cell.className += ' date-cell';
+                        cell.contentEditable = false;
+                        break;
+                    case 6: // Mode By
+                        cell.contentEditable = false;
+                        cell.appendChild(createModeBySelect());
+                        break;
+                    case 7: // Letter No
+                        const letterNumber = getLetterNumber(rowCount); // Generate letter number based on serial
+                        cell.textContent = letterNumber; // Set letter number
+                        cell.contentEditable = true; // Make not editable
+                        break;
+                    default:
+                        cell.contentEditable = true;
+                }
+                newRow.appendChild(cell);
+            }
+            
+            // Add delete button cell
+            const deleteCell = document.createElement('td');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.onclick = function() {
+                if (confirm('Are you sure you want to delete this row?')) {
+                    newRow.remove();
+                    updateSerialNumbers();
+                    saveToLocalStorage();
+                }
+            };
+            deleteCell.appendChild(deleteBtn);
+            newRow.appendChild(deleteCell);
+            
+            tbody.appendChild(newRow);
+            saveToLocalStorage();
+        }
+
+        function updateSerialNumbers() {
+            const rows = document.querySelectorAll('#projectTable tbody tr');
+            rows.forEach((row, index) => {
+                row.cells[0].textContent = index + 1; // Update Sr. No
+                row.cells[7].textContent = getLetterNumber(index + 1); // Update Letter No
+            });
+        }
+
+        function saveToLocalStorage() {
+            const tableData = [];
+            const rows = document.querySelectorAll('#projectTable tbody tr');
+            
+            rows.forEach(row => {
+                const rowData = [];
+                for (let i = 0; i < row.cells.length - 1; i++) { // -1 to skip delete button
+                    const cell = row.cells[i];
+                    if (cell.querySelector('select')) {
+                        rowData.push(cell.querySelector('select').value);
+                    } else {
+                        rowData.push(cell.textContent);
+                    }
+                }
+                tableData.push(rowData);
+            });
+            
+            localStorage.setItem('tableData', JSON.stringify(tableData));
+        }
+
+        document.getElementById('projectTable').addEventListener('input', function(e) {
+            if (e.target.matches('.editable')) {
+                saveToLocalStorage();
+            }
+        });
+
+        // Handle select changes
+        document.getElementById('projectTable').addEventListener('change', function(e) {
+            if (e.target.matches('select')) {
+                saveToLocalStorage();
+            }
+        });
+
+        // Load saved data
+        window.addEventListener('load', function() {
+            const savedData = localStorage.getItem('tableData');
+            if (savedData) {
+                const tableData = JSON.parse(savedData);
+                letterCounter = tableData.length + 1;
+                
+                tableData.forEach(rowData => {
+                    addRow();
+                    const rows = document.querySelectorAll('#projectTable tbody tr');
+                    const lastRow = rows[rows.length - 1];
+                    
+                    rowData.forEach((cellData, index) => {
+                        if (index === 6) { // Mode By column
+                            lastRow.cells[index].querySelector('select').value = cellData;
+                        } else if (index !== 1) { // Skip date column
+                            lastRow.cells[index].textContent = cellData;
+                        }
+                    });
+                });
+            } else {
+                // Add initial row if no saved data
+                addRow();
+            }
+        });
+    </script>
+</body>
+</html>
