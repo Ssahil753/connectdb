@@ -41,7 +41,7 @@
         button {
             margin: 10px 5px;
             padding: 8px 16px;
-            background-color: #007bff;
+            background-color: aqua;
             color: white;
             border: none;
             border-radius: 4px;
@@ -49,7 +49,7 @@
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color:white;
         }
 
         .delete-btn {
@@ -63,7 +63,7 @@
         }
 
         .save-btn {
-            background-color: #28a745;
+            background-color: aqua;
             padding: 6px 12px;
         }
 
@@ -99,8 +99,16 @@
     </style>
 </head>
 <body>
-    <button onclick="addRow()">Add New Row ➕</button>
-    <button class="save-btn" onclick="saveAllRows()">Saving... 💾</button>
+    <button onclick="addRow()" style="font-weight: bold; color: black;background-color: lightgreen;"> 
+        Add New Row ➕
+    </button>
+    <button onclick="" style="font-weight: bold; color: black;background-color: lightseagreen;"> 
+        Add Specific Row ➕
+    </button>
+    <button class="save-btn" onclick="saveAllRows()" style="font-weight: bold;color: black;background-color:darksalmon;"> 
+        Saving... 💾
+    </button>
+    
     <table id="projectTable">
         <thead>
             <tr>
@@ -170,85 +178,81 @@
         }
 
         async function addRow(rowData = null) {
-            const table = document.getElementById('projectTable');
-            const tbody = table.getElementsByTagName('tbody')[0];
-            const rowCount = tbody.getElementsByTagName('tr').length + 1;
-            const newRow = document.createElement('tr');
-            const columns = table.getElementsByTagName('th').length - 1;
+    const table = document.getElementById('projectTable');
+    const tbody = table.getElementsByTagName('tbody')[0];
+    const rowCount = tbody.getElementsByTagName('tr').length + 1;
+    const newRow = document.createElement('tr');
+    const columns = table.getElementsByTagName('th').length - 1;
 
-            const rowId = rowData ? rowData.id : Date.now().toString();
-            newRow.setAttribute('data-id', rowId);
+    const rowId = rowData ? rowData.id : Date.now().toString();
+    newRow.setAttribute('data-id', rowId);
 
-            for (let i = 0; i < columns; i++) {
-                const cell = document.createElement('td');
-                cell.className = 'editable';
-                
-                switch(i) {
-                    case 0:
-                        cell.textContent = rowCount;
-                        cell.contentEditable = false; // Sr. No is not editable
-                        break;
-                    case 1:
-                        cell.textContent = rowData ? rowData.date : getCurrentDate();
-                        cell.className += ' date-cell';
-                        cell.contentEditable = false; // Date is not editable
-                        break;
-                    case 6:
-                        cell.contentEditable = false;
-                        const select = createModeBySelect();
-                        if (rowData) {
-                            select.value = rowData.modeBy;
-                        }
-                        cell.appendChild(select);
-                        break;
-                    case 7:
-                        cell.textContent = rowData ? rowData.letterNo : getLetterNumber(rowCount);
-                        cell.contentEditable = false; // Letter No is not editable
-                        break;
-                    case 3: // Subject column
-                        cell.contentEditable = true;
-                        if (rowData) {
-                            cell.textContent = rowData.subject || '';
-                        }
-                        break;
-                    default:
-                        cell.contentEditable = true;
-                        if (rowData) {
-                            const fields = ['srNo', 'date', 'projectName', 'subject', 'sentTo', 'sentBy', 'modeBy', 'letterNo'];
-                            cell.textContent = rowData[fields[i]] || '';
-                        }
+    for (let i = 0; i < columns; i++) {
+        const cell = document.createElement('td');
+        cell.className = 'editable';
+
+        switch(i) {
+            case 0:
+                cell.textContent = rowCount;
+                cell.contentEditable = false;
+                break;
+            case 1:
+                cell.textContent = rowData ? rowData.date : getCurrentDate();
+                cell.className += ' date-cell';
+                cell.contentEditable = false;
+                break;
+            case 6:
+                const select = createModeBySelect();
+                if (rowData) {
+                    select.value = rowData.modeBy;
                 }
-
-                // Wrap text in the subject column after 30 words
-                if (i === 3) {
-                    cell.style.whiteSpace = 'normal';
+                cell.appendChild(select);
+                cell.contentEditable = false;
+                break;
+            case 7:
+                cell.textContent = rowData ? rowData.letterNo : getLetterNumber(rowCount);
+                cell.contentEditable = false;
+                break;
+            case 3:
+                cell.contentEditable = true;
+                if (rowData) {
+                    cell.textContent = rowData.subject || '';
                 }
-
-                newRow.appendChild(cell);
-            }
-
-            const deleteCell = document.createElement('td');
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Delete 🗑️';
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.onclick = async function() {
-                if (confirm('Are you sure you want to delete this row?')) {
-                    const rowId = newRow.getAttribute('data-id');
-                    await deleteRowFromFirebase(rowId);
-                    newRow.remove();
-                    updateSerialNumbers();
+                break;
+            default:
+                cell.contentEditable = true;
+                if (rowData) {
+                    const fields = ['srNo', 'date', 'projectName', 'subject', 'sentTo', 'sentBy', 'modeBy', 'letterNo'];
+                    cell.textContent = rowData[fields[i]] || '';
                 }
-            };
-            deleteCell.appendChild(deleteBtn);
-            newRow.appendChild(deleteCell);
-
-            tbody.appendChild(newRow);
-
-            if (!rowData) {
-                await saveRowToFirebase(newRow);
-            }
-            newRow.cells[0].focus(); // Focus the first cell of the new row
         }
+
+        newRow.appendChild(cell);
+    }
+
+    const deleteCell = document.createElement('td');
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete 🗑️';
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.onclick = async function() {
+        if (confirm('Are you sure you want to delete this row?')) {
+            const rowId = newRow.getAttribute('data-id');
+            await deleteRowFromFirebase(rowId);
+            newRow.remove();
+            updateSerialNumbers();
+        }
+    };
+    deleteCell.appendChild(deleteBtn);
+    newRow.appendChild(deleteCell);
+
+    tbody.appendChild(newRow);
+
+    if (!rowData) {
+        await saveRowToFirebase(newRow);
+    }
+    newRow.cells[0].focus(); // Focus the first cell of the new row
+}
+
 
         async function saveRowToFirebase(row) {
             const rowId = row.getAttribute('data-id');
@@ -273,13 +277,14 @@
         }
 
         async function deleteRowFromFirebase(rowId) {
-            try {
-                await projectsCollection.doc(rowId).delete();
-            } catch (error) {
-                console.error("Error deleting from Firebase:", error);
-                alert("Error deleting data. Please try again.");
-            }
-        }
+    try {
+        await projectsCollection.doc(rowId).delete();
+        console.log(`Document with ID ${rowId} deleted from Firestore.`);
+    } catch (error) {
+        console.error("Error deleting from Firebase:", error);
+        alert("Error deleting data. Please try again.");
+    }
+}
 
         async function loadDataFromFirebase() {
             try {
