@@ -4,18 +4,19 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <style>
-        /* Existing styles remain unchanged */
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
             font-family: Arial, sans-serif;
+            transition: all 0.3s ease;
         }
 
         th, td {
             border: 1px solid #ddd;
             padding: 12px;
             position: relative;
+            overflow-wrap: break-word;
         }
 
         th {
@@ -80,18 +81,33 @@
         .date-cell {
             white-space: nowrap;
         }
+
+        .subject-cell {
+            max-width: 200px; /* Adjust as needed */
+            overflow-wrap: break-word;
+        }
+        @keyframes saveAnimation {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+            }
+
+        .saving {
+        animation: saveAnimation 1s ease;
+        }
+
     </style>
 </head>
 <body>
     <button onclick="addRow()">Add New Row ➕</button>
-    <button class="save-btn" onclick="saveAllRows()">Save All 💾</button>
+    <button class="save-btn" onclick="saveAllRows()">Saving... 💾</button>
     <table id="projectTable">
         <thead>
             <tr>
                 <th>Sr. No</th>
                 <th>Date</th>
                 <th>Project Name</th>
-                <th>Subject</th>
+                <th class="subject-cell">Subject</th>
                 <th>Sent To</th>
                 <th>Sent By</th>
                 <th>Mode By</th>
@@ -104,7 +120,6 @@
     </table>
 
     <script>
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyALwHPP263lThq0dpSgjzquqWcork4bOJ4",
             authDomain: "connectdb1.firebaseapp.com",
@@ -115,20 +130,23 @@
             measurementId: "G-FV3VRFHQGV"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const projectsCollection = db.collection('projects');
-
-        let letterCounter = 1;
 
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         });
 
-        function getCurrentGMTDate() {
-            const date = new Date();
-            return date.toISOString().split('T')[0];
+        function formatDate(date) {
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0'); // January is 0!
+            const yy = date.getFullYear().toString().slice(-2);
+            return `${dd}-${mm}-${yy}`;
+        }
+
+        function getCurrentDate() {
+            return formatDate(new Date());
         }
 
         function getLetterNumber(serialNumber) {
@@ -141,7 +159,7 @@
 
         function createModeBySelect() {
             const select = document.createElement('select');
-            const options = ['By Hand', 'By Email'];
+            const options = ['By Hand', 'By Email',' By Courier'];
             options.forEach(option => {
                 const opt = document.createElement('option');
                 opt.value = option;
@@ -168,12 +186,12 @@
                 switch(i) {
                     case 0:
                         cell.textContent = rowCount;
-                        cell.contentEditable = true;
+                        cell.contentEditable = false; // Sr. No is not editable
                         break;
                     case 1:
-                        cell.textContent = rowData ? rowData.date : getCurrentGMTDate();
+                        cell.textContent = rowData ? rowData.date : getCurrentDate();
                         cell.className += ' date-cell';
-                        cell.contentEditable = false;
+                        cell.contentEditable = false; // Date is not editable
                         break;
                     case 6:
                         cell.contentEditable = false;
@@ -185,7 +203,13 @@
                         break;
                     case 7:
                         cell.textContent = rowData ? rowData.letterNo : getLetterNumber(rowCount);
+                        cell.contentEditable = false; // Letter No is not editable
+                        break;
+                    case 3: // Subject column
                         cell.contentEditable = true;
+                        if (rowData) {
+                            cell.textContent = rowData.subject || '';
+                        }
                         break;
                     default:
                         cell.contentEditable = true;
@@ -194,6 +218,12 @@
                             cell.textContent = rowData[fields[i]] || '';
                         }
                 }
+
+                // Wrap text in the subject column after 30 words
+                if (i === 3) {
+                    cell.style.whiteSpace = 'normal';
+                }
+
                 newRow.appendChild(cell);
             }
 
@@ -217,6 +247,7 @@
             if (!rowData) {
                 await saveRowToFirebase(newRow);
             }
+            newRow.cells[0].focus(); // Focus the first cell of the new row
         }
 
         async function saveRowToFirebase(row) {
@@ -261,7 +292,6 @@
                     addRow({ id: doc.id, ...data });
                 });
                 
-                letterCounter = snapshot.size + 1;
             } catch (error) {
                 console.error("Error loading data from Firebase:", error);
                 alert("Error loading data. Please refresh the page.");
@@ -278,31 +308,67 @@
         }
 
         async function saveAllRows() {
-            const rows = document.querySelectorAll('#projectTable tbody tr');
-            for (const row of rows) {
-                await saveRowToFirebase(row);
-            }
-            alert("All rows saved successfully!");
-        }
+    const saveButton = document.querySelector('.save-btn');
 
-        // Event listeners
-        document.getElementById('projectTable').addEventListener('input', function(e) {
-            if (e.target.matches('.editable')) {
-                const row = e.target.closest('tr');
-                saveRowToFirebase(row);
+    // Add animation class
+    saveButton.classList.add('saved');
+
+    const rows = document.querySelectorAll('#projectTable tbody tr');
+    for (const row of rows) {
+        await saveRowToFirebase(row);
+    }
+
+    // Remove animation class after a short delay
+    setTimeout(() => {
+        saveButton.classList.remove('saving');
+    }, 1000); // Adjust duration as needed
+}
+
+// Automatic save every 5 seconds
+setInterval(saveAllRows, 5000);
+
+        // Event listeners for keyboard navigation
+        document.getElementById('projectTable').addEventListener('keydown', function(e) {
+            const target = e.target;
+            if (target.matches('.editable')) {
+                const row = target.closest('tr');
+                const cells = Array.from(row.cells);
+                const index = cells.indexOf(target);
+
+                // Navigate with arrow keys
+                if (e.key === 'ArrowRight' && index < cells.length - 1) {
+                    cells[index + 1].focus();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowLeft' && index > 0) {
+                    cells[index - 1].focus();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowDown') {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow) {
+                        nextRow.cells[index].focus();
+                    }
+                    e.preventDefault();
+                } else if (e.key === 'ArrowUp') {
+                    const prevRow = row.previousElementSibling;
+                    if (prevRow) {
+                        prevRow.cells[index].focus();
+                    }
+                    e.preventDefault();
+                }
+
+                // Enter key to edit
+                if (e.key === 'Enter') {
+                    target.contentEditable = true;
+                    e.preventDefault();
+                }
             }
         });
-
-        document.getElementById('projectTable').addEventListener('change', function(e) {
-            if (e.target.matches('select')) {
-                const row = e.target.closest('tr');
-                saveRowToFirebase(row);
-            }
-        });
-        
 
         // Load data when page loads
         window.addEventListener('load', loadDataFromFirebase);
+
+        // Automatic save every 5 seconds
+        setInterval(saveAllRows, 5000);
     </script>
 </body>
 </html>
