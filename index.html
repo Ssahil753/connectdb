@@ -1,131 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <style>
-        table {
+      table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
             font-family: Arial, sans-serif;
-            transition: all 0.3s ease;
+            table-layout: fixed;
         }
 
         th, td {
             border: 1px solid #ddd;
-            padding: 12px;
+            padding: 8px;
+            height: 50px;
             position: relative;
-            overflow-wrap: break-word;
+        }
+
+        td.editable {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            max-height: 50px;
+            padding: 5px;
+            line-height: 1.2;
+        }
+
+        td.editable:focus {
+            outline: 2px solid #007bff;
+            background-color: #fff;
+            height: auto;
+            max-height: 150px;
+            z-index: 1;
+            position: relative;
         }
 
         th {
             background-color: #f4f4f4;
             font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
 
-        tr:nth-child(even) {
-            background-color: #f8f8f8;
+#projectTable th:nth-child(1), 
+#projectTable td:nth-child(1) {
+    width: 60px; /* Adjust width for Sr. No */
+}
+
+#projectTable th:nth-child(2), 
+#projectTable td:nth-child(2) {
+    width: 90px; /* Adjust width for Date */
+}
+
+#projectTable th:nth-child(7), 
+#projectTable td:nth-child(7) {
+    width: 100px; /* Adjust width for Date */
+}
+
+#projectTable th:nth-child(8), 
+#projectTable td:nth-child(8) {
+    width: 260px; /* Adjust width for Date */
+}
+
+
+#projectTable th:nth-child(9), 
+#projectTable td:nth-child(9) {
+    width: 120px; /* Adjust width for Date */
+}
+
+    #projectTable td:nth-child(3), /* Project Name */
+    #projectTable td:nth-child(4), /* Subject */
+    #projectTable td:nth-child(5), /* Sent To */
+    #projectTable td:nth-child(6)  /* Sent By */
+    {
+        width: 150px; /* Set the width for these editable columns */
+    }
+    
+
+    .editable {
+        overflow-wrap: break-word;
+        white-space: normal; /* Allow wrapping */
+        height: 50px; /* Fixed height */
+        cursor: text;
+        max-width: 150px; /* Set a max-width */
+        padding: 5px; /* Add padding for aesthetics */
+        overflow-y:hidden; /* Enable scrolling if content exceeds height */
         }
 
-        .editable:hover {
-            background-color: #f0f0f0;
-            cursor: text;
-        }
+.editable:focus {
+    outline: 2px solid #007bff;
+    background-color: #fff;
+}
 
-        .editable:focus {
-            outline: 2px solid #007bff;
-            background-color: #fff;
-        }
+tr:nth-child(even) {
+    background-color: #f8f8f8;
+}
 
-        button {
-            margin: 10px 5px;
-            padding: 8px 16px;
-            background-color: aqua;
-            color: white;
+.editable:hover {
+    background-color: #f0f0f0;
+}
+
+.add-btn, .delete-btn, .save-btn {
+    font-weight: bold;
+    color: black;
+    padding: 10px 9px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+}
+
+.add-btn {
+    background-color: lightgreen;
+}
+
+.add-btn:hover {
+    background-color: rgb(36, 46, 189);
+    color: #ddd; /* Change color for contrast */
+}
+
+.delete-btn {
+    background-color: lightcoral;
+}
+
+.delete-btn:hover {
+    background-color: #ff2147;
+    color: #fff; /* Change color for contrast */
+}
+
+.save-btn {
+    background-color: darksalmon;
+}
+
+.save-btn:hover {
+    background-color: #ff8c8c; /* Change hover color */
+    color: #fff; /* Change color for contrast */
+}
+
+#tableContainer {
+    height: 680px;
+    overflow-y: auto;
+}
+
+.cell-focus {
+            outline: 2px solid #007bff !important;
+            background-color: #f0f8ff !important;
+        }
+        
+        /* Make select elements fill their container */
+        select {
+            width: 100%;
+            height: 100%;
             border: none;
-            border-radius: 4px;
+            background: transparent;
+            padding: 5px;
             cursor: pointer;
         }
 
-        button:hover {
-            background-color:white;
+        /* Style for select elements when their cell has focus */
+        td.cell-focus select {
+            outline: none;
+            background-color: #f0f8ff;
         }
 
-        .delete-btn {
-            background-color: #dc3545;
-            padding: 6px 12px;
-            margin: 0;
+        select:focus {
+            outline: 2px solid #007bff;
         }
-
-        .delete-btn:hover {
-            background-color: #c82333;
-        }
-
-        .save-btn {
-            background-color: aqua;
-            padding: 6px 12px;
-        }
-
-        .save-btn:hover {
-            background-color: #218838;
-        }
-
-        select {
-            padding: 5px;
-            width: 100%;
-            border: none;
-            background: transparent;
-        }
-
-        .date-cell {
-            white-space: nowrap;
-        }
-
-        .subject-cell {
-            max-width: 200px; /* Adjust as needed */
-            overflow-wrap: break-word;
-        }
-        @keyframes saveAnimation {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-            }
-
-        .saving {
-        animation: saveAnimation 1s ease;
-        }
-
     </style>
 </head>
+
 <body>
-    <button onclick="addRow()" style="font-weight: bold; color: black;background-color: lightgreen;"> 
+
+    <button class="add-btn" onclick="addRow()"> 
         Add New Row ➕
     </button>
-    <button onclick="" style="font-weight: bold; color: black;background-color: lightseagreen;"> 
-        Add Specific Row ➕
-    </button>
-    <button class="save-btn" onclick="saveAllRows()" style="font-weight: bold;color: black;background-color:darksalmon;"> 
+    <button class="save-btn" onclick="saveAllRows()"> 
         Saving... 💾
     </button>
     
-    <table id="projectTable">
-        <thead>
-            <tr>
-                <th>Sr. No</th>
-                <th>Date</th>
-                <th>Project Name</th>
-                <th class="subject-cell">Subject</th>
-                <th>Sent To</th>
-                <th>Sent By</th>
-                <th>Mode By</th>
-                <th>Letter No</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <button class="delete-btn" onclick="deleteAllRows()"> 
+        Delete All Rows ❌
+    </button>
+
+
+    <div id="tableContainer">
+        <table id="projectTable">
+            <thead>
+                <tr>
+                    <th>Sr. No</th>
+                    <th>Date</th>
+                    <th>Project Name</th>
+                    <th class="subject-cell">Subject</th>
+                    <th>Sent To</th>
+                    <th>Sent By</th>
+                    <th>Mode By</th>
+                    <th>Letter No</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -141,33 +218,101 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const projectsCollection = db.collection('projects');
+        let isLoading = false;
 
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-        });
 
-        function formatDate(date) {
-            const dd = String(date.getDate()).padStart(2, '0');
-            const mm = String(date.getMonth() + 1).padStart(2, '0'); // January is 0!
-            const yy = date.getFullYear().toString().slice(-2);
-            return `${dd}-${mm}-${yy}`;
+        async function checkScroll() {
+            const container = document.getElementById('tableContainer');
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10 && !isLoading) {
+                isLoading = true;
+                await addInitialRows(15); // Increase to 15 rows on scroll
+                isLoading = false;
+            }
         }
 
-        function getCurrentDate() {
-            return formatDate(new Date());
+        async function addInitialRows(count) {
+            for (let i = 0; i < count; i++) {
+                await addRow();
+            }
         }
 
-        function getLetterNumber(serialNumber) {
-            const date = new Date();
-            const month = date.toLocaleString('default', { month: 'short' });
-            const year = date.getFullYear();
-            const fiscalYear = `${year}-${(year + 1).toString().slice(-2)}`;
-            return `CEINSYS/OPR/${fiscalYear}/${month.toUpperCase()}/${String(serialNumber).padStart(3, '0')}`;
+        async function addRow(rowData = null) {
+            const tbody = document.querySelector('#projectTable tbody');
+            const newRow = document.createElement('tr');
+            const rowId = rowData ? rowData.id : Date.now().toString();
+            newRow.setAttribute('data-id', rowId);
+            const columns = 8; // Total number of columns except for actions
+
+            for (let i = 0; i < columns; i++) {
+                const cell = document.createElement('td');
+                cell.className = 'editable';
+
+                switch (i) {
+                    case 0:
+                        cell.textContent = tbody.children.length + 1;
+                        cell.style.textAlign='center';
+                        cell.style.width='10px';
+                        cell.contentEditable = false;
+                        break;
+                    case 1:
+                        cell.textContent = rowData ? rowData.date : getCurrentDate(); // Date
+                        cell.style.textAlign='center'; 
+                        cell.contentEditable = false;
+                        break;
+                    case 6:
+                        const select = createModeBySelect(); // Mode By
+                        if (rowData) {
+                            select.value = rowData.modeBy;
+                        }
+                        cell.appendChild(select);
+                        cell.contentEditable = false;
+                        break;
+                    case 7:
+                        cell.textContent = rowData ? rowData.letterNo : getLetterNumber(tbody.children.length + 1); // Letter No
+                        cell.contentEditable = false;
+                        break;
+                    case 3:
+                        cell.contentEditable = true; // Subject
+                        if (rowData) {
+                            cell.textContent = rowData.subject || '';
+                        }
+                        break;
+                    default:
+                        cell.contentEditable = true; // Other editable fields
+                        if (rowData) {
+                            const fields = ['srNo', 'date', 'projectName', 'subject', 'sentTo', 'sentBy', 'modeBy', 'letterNo'];
+                            cell.textContent = rowData[fields[i]] || '';
+                        }
+                }
+                newRow.appendChild(cell);
+            }
+
+            const deleteCell = document.createElement('td');
+            deleteCell.style.textAlign='center';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete 🗑️';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.onclick = async function() {
+                if (confirm('Are you sure you want to delete this row?')) {
+                    const rowId = newRow.getAttribute('data-id');
+                    await deleteRowFromFirebase(rowId);
+                    newRow.remove();
+                }
+            };
+            deleteCell.appendChild(deleteBtn);
+            newRow.appendChild(deleteCell);
+            tbody.appendChild(newRow);
+
+            if (!rowData) {
+                await saveRowToFirebase(newRow);
+            }
+            newRow.cells[0].focus(); // Focus the first cell of the new row
         }
+       
 
         function createModeBySelect() {
             const select = document.createElement('select');
-            const options = ['By Hand', 'By Email',' By Courier'];
+            const options = ['By Hand', 'By Email', 'By Courier'];
             options.forEach(option => {
                 const opt = document.createElement('option');
                 opt.value = option;
@@ -176,83 +321,6 @@
             });
             return select;
         }
-
-        async function addRow(rowData = null) {
-    const table = document.getElementById('projectTable');
-    const tbody = table.getElementsByTagName('tbody')[0];
-    const rowCount = tbody.getElementsByTagName('tr').length + 1;
-    const newRow = document.createElement('tr');
-    const columns = table.getElementsByTagName('th').length - 1;
-
-    const rowId = rowData ? rowData.id : Date.now().toString();
-    newRow.setAttribute('data-id', rowId);
-
-    for (let i = 0; i < columns; i++) {
-        const cell = document.createElement('td');
-        cell.className = 'editable';
-
-        switch(i) {
-            case 0:
-                cell.textContent = rowCount;
-                cell.contentEditable = false;
-                break;
-            case 1:
-                cell.textContent = rowData ? rowData.date : getCurrentDate();
-                cell.className += ' date-cell';
-                cell.contentEditable = false;
-                break;
-            case 6:
-                const select = createModeBySelect();
-                if (rowData) {
-                    select.value = rowData.modeBy;
-                }
-                cell.appendChild(select);
-                cell.contentEditable = false;
-                break;
-            case 7:
-                cell.textContent = rowData ? rowData.letterNo : getLetterNumber(rowCount);
-                cell.contentEditable = false;
-                break;
-            case 3:
-                cell.contentEditable = true;
-                if (rowData) {
-                    cell.textContent = rowData.subject || '';
-                }
-                break;
-            default:
-                cell.contentEditable = true;
-                if (rowData) {
-                    const fields = ['srNo', 'date', 'projectName', 'subject', 'sentTo', 'sentBy', 'modeBy', 'letterNo'];
-                    cell.textContent = rowData[fields[i]] || '';
-                }
-        }
-
-        newRow.appendChild(cell);
-    }
-
-    const deleteCell = document.createElement('td');
-    const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = 'Delete 🗑️';
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.onclick = async function() {
-        if (confirm('Are you sure you want to delete this row?')) {
-            const rowId = newRow.getAttribute('data-id');
-            await deleteRowFromFirebase(rowId);
-            newRow.remove();
-            updateSerialNumbers();
-        }
-    };
-    deleteCell.appendChild(deleteBtn);
-    newRow.appendChild(deleteCell);
-
-    tbody.appendChild(newRow);
-
-    if (!rowData) {
-        await saveRowToFirebase(newRow);
-    }
-    newRow.cells[0].focus(); // Focus the first cell of the new row
-}
-
 
         async function saveRowToFirebase(row) {
             const rowId = row.getAttribute('data-id');
@@ -277,14 +345,13 @@
         }
 
         async function deleteRowFromFirebase(rowId) {
-    try {
-        await projectsCollection.doc(rowId).delete();
-        console.log(`Document with ID ${rowId} deleted from Firestore.`);
-    } catch (error) {
-        console.error("Error deleting from Firebase:", error);
-        alert("Error deleting data. Please try again.");
-    }
-}
+            try {
+                await projectsCollection.doc(rowId).delete();
+            } catch (error) {
+                console.error("Error deleting from Firebase:", error);
+                alert("Error deleting data. Please try again.");
+            }
+        }
 
         async function loadDataFromFirebase() {
             try {
@@ -296,44 +363,290 @@
                     const data = doc.data();
                     addRow({ id: doc.id, ...data });
                 });
-                
             } catch (error) {
                 console.error("Error loading data from Firebase:", error);
                 alert("Error loading data. Please refresh the page.");
             }
         }
 
-        function updateSerialNumbers() {
-            const rows = document.querySelectorAll('#projectTable tbody tr');
-            rows.forEach((row, index) => {
-                row.cells[0].textContent = index + 1;
-                row.cells[7].textContent = getLetterNumber(index + 1);
-                saveRowToFirebase(row);
-            });
+        async function deleteAllRows() {
+            const tbody = document.querySelector('#projectTable tbody');
+            const rows = Array.from(tbody.children); // Convert HTMLCollection to array
+            const rowIds = rows.map(row => row.getAttribute('data-id')); // Get all row IDs
+
+            for (const rowId of rowIds) {
+                await deleteRowFromFirebase(rowId);
+            }
+
+            tbody.innerHTML = ''; // Clear the table body
         }
 
-        async function saveAllRows() {
-    const saveButton = document.querySelector('.save-btn');
+        function getCurrentDate() {
+            const date = new Date();
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yy = date.getFullYear().toString().slice(-2);
+            return `${dd}-${mm}-${yy}`;
+        }
 
-    // Add animation class
-    saveButton.classList.add('saved');
+        function getLetterNumber(serialNumber) {
+            const date = new Date();
+            const month = date.getMonth() + 1; // Month is zero-based, so add 1
+            const monthStr = String(month).padStart(2, '0'); // Format as two-digit string
+            const year = date.getFullYear();
+            const fiscalYear = `${year}-${(year + 1).toString().slice(-2)}`;
+            return `CEINSYS/OPR/${fiscalYear}/${monthStr}/${String(serialNumber).padStart(4, '0')}`;
+        }
+        function highlightSelected() {
+        const selectedCell = document.querySelector('.editable:focus');
+        if (selectedCell) {
+        selectedCell.classList.toggle('highlighted');
+        } else {
+        alert("Please select a cell to highlight.");
+        }
+        }
 
-    const rows = document.querySelectorAll('#projectTable tbody tr');
-    for (const row of rows) {
-        await saveRowToFirebase(row);
-    }
+        function strikeThroughSelected() {
+         const selectedCell = document.querySelector('.editable:focus');
+        if (selectedCell) {
+        selectedCell.classList.toggle('strike-through');
+        } else {
+        alert("Please select a cell to strike through.");
+        }
+        }
+        function handleKeyNavigation(e, element) {
+            const row = element.closest('tr');
+            const cells = Array.from(row.cells);
+            const currentIndex = cells.indexOf(element);
+            
+            switch(e.key) {
+                case 'ArrowRight':
+                    if (currentIndex < cells.length - 1) {
+                        const nextCell = cells[currentIndex + 1];
+                        if (nextCell.querySelector('select')) {
+                            nextCell.querySelector('select').focus();
+                        } else {
+                            nextCell.focus();
+                        }
+                        e.preventDefault();
+                    }
+                    break;
+                    
+                case 'ArrowLeft':
+                    if (currentIndex > 0) {
+                        const prevCell = cells[currentIndex - 1];
+                        if (prevCell.querySelector('select')) {
+                            prevCell.querySelector('select').focus();
+                        } else {
+                            prevCell.focus();
+                        }
+                        e.preventDefault();
+                    }
+                    break;
+                    
+                case 'ArrowDown':
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow) {
+                        const targetCell = nextRow.cells[currentIndex];
+                        if (targetCell.querySelector('select')) {
+                            targetCell.querySelector('select').focus();
+                        } else {
+                            targetCell.focus();
+                        }
+                    }
+                    e.preventDefault();
+                    break;
+                    
+                case 'ArrowUp':
+                    const prevRow = row.previousElementSibling;
+                    if (prevRow) {
+                        const targetCell = prevRow.cells[currentIndex];
+                        if (targetCell.querySelector('select')) {
+                            targetCell.querySelector('select').focus();
+                        } else {
+                            targetCell.focus();
+                        }
+                    }
+                    e.preventDefault();
+                    break;
+            }
+        }
 
-    // Remove animation class after a short delay
-    setTimeout(() => {
-        saveButton.classList.remove('saving');
-    }, 1000); // Adjust duration as needed
-}
+        document.addEventListener('keydown', function(e) {
+            const target = e.target;
+            if (target.matches('.editable') || target.matches('select')) {
+                handleKeyNavigation(e, target.matches('select') ? target.parentElement : target);
+            }
+        });
 
-// Automatic save every 5 seconds
-setInterval(saveAllRows, 5000);
+        function createModeBySelect() {
+            const select = document.createElement('select');
+            const options = ['By Hand', 'By Email', 'By Courier'];
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            });
+            select.addEventListener('change', function() {
+                const row = this.closest('tr');
+                saveRowToFirebase(row);
+            });
+            return select;
+        }
+        function handleTableNavigation(e) {
+            const target = e.target;
+            const cell = target.closest('td');
+            if (!cell) return;
+            
+            const row = cell.closest('tr');
+            const tbody = row.closest('tbody');
+            const currentRowIndex = Array.from(tbody.rows).indexOf(row);
+            const currentCellIndex = Array.from(row.cells).indexOf(cell);
 
-        // Event listeners for keyboard navigation
-        document.getElementById('projectTable').addEventListener('keydown', function(e) {
+            let nextCell = null;
+            let handled = true;
+
+            switch (e.key) {
+                case 'ArrowRight':
+                    if (currentCellIndex < row.cells.length - 1) {
+                        nextCell = row.cells[currentCellIndex + 1];
+                    }
+                    break;
+
+                case 'ArrowLeft':
+                    if (currentCellIndex > 0) {
+                        nextCell = row.cells[currentCellIndex - 1];
+                    }
+                    break;
+
+                case 'ArrowDown':
+                    if (currentRowIndex < tbody.rows.length - 1) {
+                        nextCell = tbody.rows[currentRowIndex + 1].cells[currentCellIndex];
+                    } else {
+                        // Add new row when at the bottom
+                        addRow().then(() => {
+                            const newRow = tbody.rows[tbody.rows.length - 1];
+                            nextCell = newRow.cells[currentCellIndex];
+                            focusCell(nextCell);
+                        });
+                        return;
+                    }
+                    break;
+
+                case 'ArrowUp':
+                    if (currentRowIndex > 0) {
+                        nextCell = tbody.rows[currentRowIndex - 1].cells[currentCellIndex];
+                    }
+                    break;
+
+                case 'Enter':
+                    if (cell.contentEditable === 'true') {
+                        // Move to next row on Enter if we're in an editable cell
+                        if (currentRowIndex < tbody.rows.length - 1) {
+                            nextCell = tbody.rows[currentRowIndex + 1].cells[currentCellIndex];
+                        } else {
+                            addRow().then(() => {
+                                const newRow = tbody.rows[tbody.rows.length - 1];
+                                nextCell = newRow.cells[currentCellIndex];
+                                focusCell(nextCell);
+                            });
+                            return;
+                        }
+                    }
+                    break;
+
+                case 'Tab':
+                    // Handle tab navigation
+                    if (!e.shiftKey && currentCellIndex < row.cells.length - 1) {
+                        nextCell = row.cells[currentCellIndex + 1];
+                    } else if (e.shiftKey && currentCellIndex > 0) {
+                        nextCell = row.cells[currentCellIndex - 1];
+                    }
+                    break;
+
+                default:
+                    handled = false;
+            }
+
+            if (nextCell && handled) {
+                e.preventDefault();
+                focusCell(nextCell);
+            }
+        }
+
+        // Helper function to focus and highlight a cell
+        function focusCell(cell) {
+            // Remove focus class from all cells
+            document.querySelectorAll('td').forEach(td => td.classList.remove('cell-focus'));
+            
+            // Add focus class to target cell
+            cell.classList.add('cell-focus');
+
+            // Handle different types of cells
+            const select = cell.querySelector('select');
+            if (select) {
+                select.focus();
+            } else if (cell.contentEditable === 'true') {
+                cell.focus();
+            } else {
+                cell.setAttribute('tabindex', '0');
+                cell.focus();
+            }
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('projectTable');
+            
+            // Handle keyboard navigation
+            table.addEventListener('keydown', handleTableNavigation);
+
+            // Handle cell clicks
+            table.addEventListener('click', function(e) {
+                const cell = e.target.closest('td');
+                if (cell) {
+                    focusCell(cell);
+                }
+            });
+
+            // Save on blur
+            table.addEventListener('blur', function(e) {
+                const cell = e.target.closest('td');
+                if (cell && cell.contentEditable === 'true') {
+                    const row = cell.closest('tr');
+                    saveRowToFirebase(row);
+                }
+            }, true);
+
+            // Initialize first cell focus
+            const firstCell = table.querySelector('tbody tr:first-child td:first-child');
+            if (firstCell) {
+                focusCell(firstCell);
+            }
+        });
+
+        // Modify createModeBySelect to work with new focus system
+        function createModeBySelect() {
+            const select = document.createElement('select');
+            const options = ['By Hand', 'By Email', 'By Courier'];
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            });
+            
+            select.addEventListener('change', function() {
+                const row = this.closest('tr');
+                saveRowToFirebase(row);
+            });
+
+            return select;
+        }
+
+
+        document.getElementById('projectTable').addEventListener('keydown', async function(e) {
             const target = e.target;
             if (target.matches('.editable')) {
                 const row = target.closest('tr');
@@ -351,6 +664,8 @@ setInterval(saveAllRows, 5000);
                     const nextRow = row.nextElementSibling;
                     if (nextRow) {
                         nextRow.cells[index].focus();
+                    } else {
+                        await addRow(); // Add a new row if at the last row
                     }
                     e.preventDefault();
                 } else if (e.key === 'ArrowUp') {
@@ -368,12 +683,12 @@ setInterval(saveAllRows, 5000);
                 }
             }
         });
+        
+        window.addEventListener('load', async () => {
+            await loadDataFromFirebase();
+            await addInitialRows(15); // Load initial rows
+        });
 
-        // Load data when page loads
-        window.addEventListener('load', loadDataFromFirebase);
-
-        // Automatic save every 5 seconds
-        setInterval(saveAllRows, 5000);
     </script>
 </body>
 </html>
