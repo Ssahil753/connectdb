@@ -39,7 +39,7 @@
             }
 
             th {
-                background-color: #f4f4f4;
+                background-color: white;
                 font-weight: bold;
                 position: sticky;
                 top: 0;
@@ -96,7 +96,7 @@
     }
 
     tr:nth-child(even) {
-        background-color: #f8f8f8;
+        background-color: white;
     }
 
     .editable:hover {
@@ -143,6 +143,7 @@
         height: 680px;
         overflow-y: auto;
     }
+    
 
     .cell-focus {
                 outline: 2px solid #007bff !important;
@@ -256,14 +257,111 @@
                 border: none;
                 cursor: pointer;
             }
-        
+        .loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999; /* Ensures the loader is on top */
+      opacity: 1;
+      transition: opacity 0.5s ease-out;
+    }
+
+    /* Loader styles */
+    .loader {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      background-color: rgba(0, 0, 0, 0.5);
+      transform: rotate(45deg);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .loader:after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      margin: auto;
+      background: #222b32;
+    }
+
+    .loader:before {
+      content: '';
+      position: absolute;
+      inset: -15px;
+      margin: auto;
+      background: #de3500;
+      animation: diamondLoader 2s linear infinite;
+    }
+
+    /* Keyframes for loader animation */
+    @keyframes diamondLoader {
+      0%, 10% {
+        transform: translate(-64px, -64px) rotate(-45deg);
+      }
+      90%, 100% {
+        transform: translate(0px, 0px) rotate(-45deg);
+      }
+    }
+
+    /* Class to hide the loader */
+    .hidden {
+      opacity: 0;
+      pointer-events: none; /* Prevent interaction when hidden */
+    }
+
+
+    .filter-input {
+      width: 950px;
+      height: 30px;
+      border-radius: 5px;
+      padding: 5px;
+      font-size: 16px;
+      margin: 20px 0;
+      border: 1px solid #ccc;
+    }
+
+    /* Highlight the matching cells */
+    .highlight {
+      background-color: yellow;
+      font-weight: bold;
+    }
+
+    /* Smooth scrolling behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Styling for table and cells */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td, th {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    /* Main content styles (hidden initially) */
+
         </style>
     </head>
 
     <body >
-        <div id="loadingOverlay" class="loading-overlay">
-            <div class="spinner"></div>
-        </div>
+        <div class="loader-wrapper" id="loaderWrapper">
+            <div class="loader" id="loader"></div>
+          </div>
+          <div id="content">
         <br><br>
         <button class="admin"  id="adminButton" onclick="openOverlay()" style="height: 80px; width: 90px; position: fixed; right: 50px; top: 10px;background-color: white;border:none; ">
             <a >
@@ -292,7 +390,8 @@
         <button class="delete-btn" onclick="deleteAllRows()"> 
             Delete All Rows ❌
         </button>
-        <input type="text" id="filterInput" class="filter-input" placeholder="Search For Records..." style="width: 950px;height:30px;border-radius: 5px;" >
+        <input type="text" id="myInput" class="filter-input" placeholder="Search For Records..." style="width: 950px;height:30px;border-radius: 5px;" >
+        
     
         <div id="tableContainer"><br>
             <table id="projectTable">
@@ -312,7 +411,7 @@
                 <tbody></tbody>
             </table>
         </div>
-
+</div>
 <script>
         const firebaseConfig = {
         apiKey: "AIzaSyALwHPP263lThq0dpSgjzquqWcork4bOJ4",
@@ -512,8 +611,6 @@ async function loadDataFromFirebase() {
             try {
                      saveRowToFirebase(newRow);
                     console.log('Row saved successfully');
-                    
-                    
             }
                     catch (error) {
                             console.error('Error saving row to Firestore:', error);
@@ -599,9 +696,7 @@ async function loadDataFromFirebase() {
 
     try {
         await projects.doc(rowId).set(rowData); // Save to Firestore
-       
         alert('Data saved successfully');
-
         updateRowInTable(rowId, rowData);
 
     } 
@@ -626,8 +721,7 @@ async function loadDataFromFirebase() {
     else {
         // If the row doesn't exist, log an error (or create the row if needed)
         console.error('Row not found for ID: ', rowId);
-    }
-    }
+    }}
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
             function openUserProfile() {
                 // You can redirect the user to the profile page or show a profile menu
@@ -699,8 +793,59 @@ async function loadDataFromFirebase() {
                     closeOverlay(); // Close overlay on sign-out
                 }
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
+const input = document.getElementById('myInput');
+const tableBody = document.querySelector('#projectTable tbody');
+
+input.addEventListener('input', function() {
+    const query = input.value.trim().toLowerCase();
+    const rows = tableBody.children;
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        let hasMatch = false;
+
+        for (let j = 0; j < row.children.length; j++) {
+            const cell = row.children[j];
+            cell.classList.remove('highlight');
+
+            if (cell.textContent.toLowerCase().includes(query)) {
+                cell.classList.add('highlight');
+                hasMatch = true;
+            }
+        }
+
+        if (hasMatch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+           
+
+        }
+    }
+
+    // Scroll to the first match
+    const firstMatch = tableBody.querySelector('.highlight');
+    if (firstMatch) {
+        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstMatch.focus();
+    }
+});
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
-            
+
+            setTimeout(function() {
+        // Hide the loader with smooth fade-out transition
+        const loaderWrapper = document.getElementById('loaderWrapper');
+        loaderWrapper.classList.add('hidden');
+        
+        // Show the main content after data is loaded
+        const content = document.getElementById('content');
+        content.style.display = 'block';
+      }, 3000) // Simulate data fetching for 3 seconds (replace with actual data fetch)
+
             // Add delete all button to the page
             const deleteAllButton = document.createElement('button');
             deleteAllButton.textContent = 'Delete All Rows';
@@ -722,7 +867,7 @@ async function loadDataFromFirebase() {
         }, (error) => {
             console.error("Error setting up real-time updates:", error);
         });
-        });
+        }); 
         window.addEventListener('load',loadDataFromFirebase)   
 
 
