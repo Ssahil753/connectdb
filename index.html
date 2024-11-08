@@ -1,561 +1,590 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-    <style>
-      table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            table-layout: fixed;
-        }
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+        <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+        <style>
+        table {
+                width: 100%;
+                border-collapse: collapse;
+                font-family: Arial, sans-serif;
+                table-layout: fixed;
+            }
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            height: 30px;
-            position: relative;
-        }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                height: 30px;
+                position: relative;
+            }
 
-        td.editable {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-y: auto;
-            max-height: 50px;
-            padding: 5px;
-            line-height: 1.2;
-        }
+            td.editable {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                overflow-y: auto;
+                max-height: 50px;
+                padding: 5px;
+                line-height: 1.2;
+            }
 
-        td.editable:focus {
-            outline: 2px solid #007bff;
-            background-color: #fff;
-            height: auto;
-            max-height: 150px;
-            z-index: 1;
-            position: relative;
-        }
+            td.editable:focus {
+                outline: 2px solid #007bff;
+                background-color: #fff;
+                height: auto;
+                max-height: 150px;
+                z-index: 1;
+                position: relative;
+            }
 
-        th {
-            background-color: #f4f4f4;
-            font-weight: bold;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
+            th {
+                background-color: #f4f4f4;
+                font-weight: bold;
+                position: sticky;
+                top: 0;
+                z-index: 2;
+            }
 
-#projectTable th:nth-child(1), 
-#projectTable td:nth-child(1) {
-    width: 60px; /* Adjust width for Sr. No */
-}
-
-#projectTable th:nth-child(2), 
-#projectTable td:nth-child(2) {
-    width: 90px; /* Adjust width for Date */
-}
-
-#projectTable th:nth-child(7), 
-#projectTable td:nth-child(7) {
-    width: 100px; /* Adjust width for Date */
-}
-
-#projectTable th:nth-child(8), 
-#projectTable td:nth-child(8) {
-    width: 260px; /* Adjust width for Date */
-}
-
-
-#projectTable th:nth-child(9), 
-#projectTable td:nth-child(9) {
-    width: 120px; /* Adjust width for Date */
-}
-
-    #projectTable td:nth-child(3), /* Project Name */
-    #projectTable td:nth-child(4), /* Subject */
-    #projectTable td:nth-child(5), /* Sent To */
-    #projectTable td:nth-child(6)  /* Sent By */
-    {
-        width: 150px; /* Set the width for these editable columns */
+    #projectTable th:nth-child(1), 
+    #projectTable td:nth-child(1) {
+        width: 60px; /* Adjust width for Sr. No */
     }
-    
-    .editable {
-        overflow-wrap: break-word;
-        white-space: normal; /* Allow wrapping */
-        height: 50px; /* Fixed height */
-        cursor: text;
-        max-width: 150px; /* Set a max-width */
-        padding: 5px; /* Add padding for aesthetics */
-        overflow-y:hidden; /* Enable scrolling if content exceeds height */
-        }
 
-.editable:focus {
-    outline: 2px solid #007bff;
-    background-color: #fff;
-}
+    #projectTable th:nth-child(2), 
+    #projectTable td:nth-child(2) {
+        width: 90px; /* Adjust width for Date */
+    }
 
-tr:nth-child(even) {
-    background-color: #f8f8f8;
-}
+    #projectTable th:nth-child(7), 
+    #projectTable td:nth-child(7) {
+        width: 100px; /* Adjust width for Date */
+    }
 
-.editable:hover {
-    background-color: #f0f0f0;
-}
+    #projectTable th:nth-child(8), 
+    #projectTable td:nth-child(8) {
+        width: 260px; /* Adjust width for Date */
+    }
 
-.add-btn, .delete-btn, .save-btn ,.insertsheet {
-    font-weight: bold;
-    color: black;
-    padding: 10px 9px;
-    cursor: pointer;
-    border: none;
-    border-radius: 4px;
-}
 
-.add-btn {
-    background-color: lightgreen;
-}
+    #projectTable th:nth-child(9), 
+    #projectTable td:nth-child(9) {
+        width: 120px; /* Adjust width for Date */
+    }
 
-.add-btn:hover {
-    background-color: rgb(36, 46, 189);
-    color: #ddd; /* Change color for contrast */
-}
-
-.delete-btn {
-    background-color: lightcoral;
-}
-
-.delete-btn:hover {
-    background-color: #ff2147;
-    color: #fff; /* Change color for contrast */
-}
-
-.save-btn {
-    background-color: lightgreen;
-}
-
-.save-btn:hover {
-    background-color: lightseagreen; /* Change hover color */
-    color: #fff; /* Change color for contrast */
-}
-
-#tableContainer {
-    height: 680px;
-    overflow-y: auto;
-}
-
-.cell-focus {
-            outline: 2px solid #007bff !important;
-            background-color: #f0f8ff !important;
-        }
-        
-        /* Make select elements fill their container */
-        select {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: transparent;
-            padding: 5px;
-            cursor: pointer;
-        }
-
-        /* Style for select elements when their cell has focus */
-        td.cell-focus select {
-            outline: none;
-            background-color: #f0f8ff;
-        }
-
-        select:focus {
-            outline: 2px solid #007bff;
-        }
-       
-        .insertsheet
+        #projectTable td:nth-child(3), /* Project Name */
+        #projectTable td:nth-child(4), /* Subject */
+        #projectTable td:nth-child(5), /* Sent To */
+        #projectTable td:nth-child(6)  /* Sent By */
         {
-            background-color: lightseagreen;
+            width: 150px; /* Set the width for these editable columns */
         }
-        .overlay {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color:transparent; /* Dark background */
-            z-index: 1000;
-            justify-content: right;
-            align-items: right;
-            color: white;
-        }
+        
+        .editable {
+            overflow-wrap: break-word;
+            white-space: normal; /* Allow wrapping */
+            height: 50px; /* Fixed height */
+            cursor: text;
+            max-width: 150px; /* Set a max-width */
+            padding: 5px; /* Add padding for aesthetics */
+            overflow-y:hidden; /* Enable scrolling if content exceeds height */
+            }
 
-        .overlay-content {
-            height: 300px;
-            width: 300px;
-            background-color: white;
-            color: black;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            width: 300px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+    .editable:focus {
+        outline: 2px solid #007bff;
+        background-color: #fff;
+    }
 
-        .overlay-content img {
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            margin-bottom: 20px;
-        }
+    tr:nth-child(even) {
+        background-color: #f8f8f8;
+    }
 
-        .overlay-content h2 {
-            margin: 10px 0;
-        }
+    .editable:hover {
+        background-color: #f0f0f0;
+    }
 
-        .overlay-content p {
-            margin-bottom: 20px;
-        }
+    .add-btn, .delete-btn, .save-btn ,.insertsheet {
+        font-weight: bold;
+        color: black;
+        padding: 10px 9px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+    }
 
-        .overlay-content button {
+    .add-btn {
+        background-color: lightgreen;
+    }
+
+    .add-btn:hover {
+        background-color: rgb(36, 46, 189);
+        color: #ddd; /* Change color for contrast */
+    }
+
+    .delete-btn {
+        background-color: lightcoral;
+    }
+
+    .delete-btn:hover {
+        background-color: #ff2147;
+        color: #fff; /* Change color for contrast */
+    }
+
+    .save-btn {
+        background-color: lightgreen;
+    }
+
+    .save-btn:hover {
+        background-color: lightseagreen; /* Change hover color */
+        color: #fff; /* Change color for contrast */
+    }
+
+    #tableContainer {
+        height: 680px;
+        overflow-y: auto;
+    }
+
+    .cell-focus {
+                outline: 2px solid #007bff !important;
+                background-color: #f0f8ff !important;
+            }
             
-            color: black;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+            /* Make select elements fill their container */
+            select {
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: transparent;
+                padding: 5px;
+                cursor: pointer;
+            }
 
+            /* Style for select elements when their cell has focus */
+            td.cell-focus select {
+                outline: none;
+                background-color: #f0f8ff;
+            }
+
+            select:focus {
+                outline: 2px solid #007bff;
+            }
         
+            .insertsheet
+            {
+                background-color: lightseagreen;
+            }
+            .overlay {
+                display: none; /* Hidden by default */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color:transparent; /* Dark background */
+                z-index: 1000;
+                justify-content: right;
+                align-items: right;
+                color: white;
+            }
 
-        /* Admin button style */
-        .admin {
-            height: 80px;
-            width: 90px;
-            position: fixed;
-            right: 50px;
-            top: 10px;
-            background-color: white;
-            border: none;
-            cursor: pointer;
-            z-index: 1001;
-        }
+            .overlay-content {
+                height: 300px;
+                width: 300px;
+                background-color: white;
+                color: black;
+                border-radius: 8px;
+                padding: 20px;
+                text-align: center;
+                width: 300px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
 
-        .admin img {
-            height: 100%;
-            width: 100%;
-        }
+            .overlay-content img {
+                border-radius: 50%;
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+                margin-bottom: 20px;
+            }
 
-        /* Close button for the overlay */
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: transparent;
-            color: black;
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
-        }
-       
-    </style>
-</head>
+            .overlay-content h2 {
+                margin: 10px 0;
+            }
 
-<body >
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-    </div>
-    <br><br>
-    <button class="admin"  id="adminButton" onclick="openOverlay()" style="height: 80px; width: 90px; position: fixed; right: 50px; top: 10px;background-color: white;border:none; ">
-        <a >
-            <img src="C:\Users\12473\Downloads\user (1).png" alt="Admin" style="height: 100%; width: 100%;">
-            <br>
-        </a>
+            .overlay-content p {
+                margin-bottom: 20px;
+            }
+
+            .overlay-content button {
+                
+                color: black;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                margin-top: 20px;
+            }
+
+            
+
+            /* Admin button style */
+            .admin {
+                height: 80px;
+                width: 90px;
+                position: fixed;
+                right: 50px;
+                top: 10px;
+                background-color: white;
+                border: none;
+                cursor: pointer;
+                z-index: 1001;
+            }
+
+            .admin img {
+                height: 100%;
+                width: 100%;
+            }
+
+            /* Close button for the overlay */
+            .close-btn {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background-color: transparent;
+                color: black;
+                font-size: 24px;
+                border: none;
+                cursor: pointer;
+            }
         
-    </button>
-    <div class="overlay" id="userOverlay" onclick="closeOverlay(event)">
-        <div class="overlay-content" onclick="event.stopPropagation()"> <!-- Prevent click event from closing the overlay when clicking inside -->
-            <button class="close-btn" onclick="closeOverlay()">✖</button>
-            <img src="C:/Users/12473/Downloads/user (1).png" alt="User Photo">
-            <h2>UserJK</h2>
-            <p>admin@Ceinsys.com</p>
-            <a href="C:\Users\12473\Downloads\Login form\Login form\index.html" onclick="signOut()" style="background-color:lightseagreen; display:inline-block; text-decoration: none; padding: 10px 20px; border-radius: 5px; color: white; text-align: center;">
-                [→ Sign Out]
+        </style>
+    </head>
+
+    <body >
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="spinner"></div>
+        </div>
+        <br><br>
+        <button class="admin"  id="adminButton" onclick="openOverlay()" style="height: 80px; width: 90px; position: fixed; right: 50px; top: 10px;background-color: white;border:none; ">
+            <a >
+                <img src="C:\Users\12473\Downloads\user (1).png" alt="Admin" style="height: 100%; width: 100%;">
+                <br>
             </a>
             
+        </button>
+        <div class="overlay" id="userOverlay" onclick="closeOverlay(event)">
+            <div class="overlay-content" onclick="event.stopPropagation()"> <!-- Prevent click event from closing the overlay when clicking inside -->
+                <button class="close-btn" onclick="closeOverlay()">✖</button>
+                <img src="C:/Users/12473/Downloads/user (1).png" alt="User Photo">
+                <h2>UserJK</h2>
+                <p>admin@Ceinsys.com</p>
+                <a href="C:\Users\12473\Downloads\Login form\Login form\index.html" onclick="signOut()" style="background-color:lightseagreen; display:inline-block; text-decoration: none; padding: 10px 20px; border-radius: 5px; color: white; text-align: center;">
+                    [→ Sign Out]
+                </a>
+                
+            </div>
         </div>
-    </div>
+        
+        <button class="add-btn" onclick="addRow()"> 
+            Add New Row ➕
+        </button>
+        
+        <button class="delete-btn" onclick="deleteAllRows()"> 
+            Delete All Rows ❌
+        </button>
+        <input type="text" id="filterInput" class="filter-input" placeholder="Search For Records..." style="width: 950px;height:30px;border-radius: 5px;" >
     
-    <button class="add-btn" onclick="addRow()"> 
-        Add New Row ➕
-    </button>
-    
-    <button class="delete-btn" onclick="deleteAllRows()"> 
-        Delete All Rows ❌
-    </button>
-    <input type="text" id="filterInput" class="filter-input" placeholder="Search For Records..." style="width: 950px;height:30px" >
-   
-    <div id="tableContainer"><br>
-        <table id="projectTable">
-            <thead>
-                <tr>
-                    <th>Sr. No</th>
-                    <th>Date</th>
-                    <th>Project Name</th>
-                    <th class="subject-cell">Subject</th>
-                    <th>Sent To</th>
-                    <th>Sent By</th>
-                    <th>Mode By</th>
-                    <th>Letter No</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+        <div id="tableContainer"><br>
+            <table id="projectTable">
+                <thead>
+                    <tr>
+                        <th>Sr. No</th>
+                        <th>Date</th>
+                        <th>Project Name</th>
+                        <th class="subject-cell">Subject</th>
+                        <th>Sent To</th>
+                        <th>Sent By</th>
+                        <th>Mode By</th>
+                        <th>Letter No</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-    <script>
-    const firebaseConfig = {
-    apiKey: "AIzaSyALwHPP263lThq0dpSgjzquqWcork4bOJ4",
-    authDomain: "connectdb1.firebaseapp.com",
-    projectId: "connectdb1",
-    storageBucket: "connectdb1.appspot.com",
-    messagingSenderId: "1578684614",
-    appId: "1:1578684614:web:e5766803dd0fc7ca9a87c7",
-    measurementId: "G-FV3VRFHQGV"
-    };
+<script>
+        const firebaseConfig = {
+        apiKey: "AIzaSyALwHPP263lThq0dpSgjzquqWcork4bOJ4",
+        authDomain: "connectdb1.firebaseapp.com",
+        projectId: "connectdb1",
+        storageBucket: "connectdb1.firebasestorage.app",
+        messagingSenderId: "1578684614",
+        appId: "1:1578684614:web:e5766803dd0fc7ca9a87c7",
+        measurementId: "G-FV3VRFHQGV"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const projectsCollection = db.collection('projects');
+        // Initialize Firebase only once
 
-
-    let isLoading = false;
-
-    function openOverlay() {
-            document.getElementById('userOverlay').style.display = 'flex';
-            document.getElementById('adminButton').style.display = 'none';
-        }
-
-        // Function to close the overlay
-        function closeOverlay(event) {
-            // If the overlay itself (not the content) is clicked, close it
-            if (event) {
-                event.stopPropagation(); // Prevent this click from propagating further
-            }
-            document.getElementById('userOverlay').style.display = 'none';
-            document.getElementById('adminButton').style.display = 'block'; // Show the admin button again
-        }
-
-
-        // Simulate Sign Out (Replace with Firebase or your authentication logic)
-        function signOut() {
-            alert('You have signed out!');
-            
-            // Here you can call Firebase auth sign out like this:
-            // firebase.auth().signOut().then(() => {
-            //     alert('Signed out successfully');
-            //     // Redirect or handle after sign out
-            // });
-            closeOverlay(); // Close overlay on sign-out
-        }
-
-    
-
-    let isAddingRow = false; 
-
-
-    async function addInitialRows(count) {
-    for (let i = 0; i < count; i++) {
-        await addRow(); // Add multiple rows if needed
-    }
-    }
-
-    async function addRow(rowData = null) {
-            const tbody = document.querySelector('#projectTable tbody');
-            const newRow = document.createElement('tr');
-            const rowId = rowData ? rowData.id : Date.now().toString();
-            newRow.setAttribute('data-id', rowId);
-            const columns = 8;
-
-            for (let i = 0; i < columns; i++) { 
-                const cell = document.createElement('td');
-                cell.className = 'editable';
-                cell.tabIndex = 0;
-
-                switch (i) {
-                    case 0:
-                        cell.textContent = tbody.children.length + 1; // Serial Number
-                        cell.style.textAlign = 'center';
-                        cell.contentEditable = false;
-                        break;
-                    case 1:
-                        cell.textContent = rowData ? rowData.date : ''; // Date will be generated after submission
-                        cell.style.textAlign = 'center';
-                        cell.contentEditable = false;
-                        break;
-                    case 6:
-                        const select = createModeBySelect();
-                        if (rowData) {
-                            select.value = rowData.modeBy;
-                        }
-                        cell.appendChild(select);
-                        cell.contentEditable = false;
-                        break;
-                    case 7:
-                        cell.textContent = rowData ? rowData.letterNo : ''; // Letter No will be generated after submission
-                        cell.contentEditable = false;
-                        break;
-                    case 3:
-                        cell.contentEditable = true;
-                        if (rowData) {
-                            cell.textContent = rowData.subject || '';
-                        }
-                        break;
-                    default:
-                        cell.contentEditable = true;
-                        if (rowData) {
-                            const fields = ['srNo', 'date', 'projectName', 'subject', 'sentTo', 'sentBy', 'modeBy', 'letterNo'];
-                            cell.textContent = rowData[fields[i]] || '';
-                        }
-                }
-                newRow.appendChild(cell);
-            }
-
-    const actionCell = document.createElement('td');
-    actionCell.style.textAlign = 'center';
-    actionCell.tabIndex = 0;
-
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = 'Submit 📤';
-    submitBtn.className = 'save-btn';
-
-    submitBtn.onclick = async function () {
-       
-    // Check specific required fields
-    const requiredFields = {
-        'projectName': 2,  // Assuming project name is in column 2
-        'subjectName': 3,  // Assuming subject name is in column 3
-        'sentTo': 4,       // Assuming sent to is in column 4
-        'sentBy': 5,       // Assuming sent by is in column 5
-        'modeBy': 6        // Assuming mode by is in column 6
-    };
-
-    // Check if all required fields are filled
-    // Check if all required fields are filled
-    const missingFields = [];
-    for (const [field, index] of Object.entries(requiredFields)) {
-    if (field === 'modeBy') {
-        // Check the value of the dropdown
-        const modeByValue = newRow.cells[index].querySelector('select').value;
-        if (!modeByValue) {
-            missingFields.push(field);
-            newRow.cells[index].querySelector('select').style.border = '2px solid red'; // Highlight dropdown
-        }
-        else{
-            newRow.cells[index].querySelector('select').style.border = '';
-            }
-    } else {
-        // Check the text content for other fields
-        const cell = newRow.cells[index];
-        if (!cell || cell.textContent.trim() === '') {
-            missingFields.push(field);
-            cell.style.border= '2px solid red'; // Highlight the cell
+        if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
         } else {
-            cell.style.border = ""; // Reset background color if filled
+        firebase.app(); // if already initialized
         }
-    }   
-    }
+        const db = firebase.firestore();
+        const projects = db.collection('projects');
 
-    if (missingFields.length > 0) {
-    alert(`Please fill in the following fields:\n${missingFields.join('\n')}`);//issue with adding
-    return;
-    }
-    
 
-    // If all required fields are filled, generate letter number and date
-    const letterNo = getLetterNumber(tbody.children.length + 1);
-    const currentDate = getCurrentDate();
 
-    // Update the row with letter number and date
-    newRow.cells[1].textContent = currentDate;  // Set the date
-    newRow.cells[7].textContent = letterNo;     // Set the letter number
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+async function loadDataFromFirebase() {
+    const tableBody = document.querySelector('#projectTable tbody');
+    tableBody.innerHTML = ''; // Clear previous data
 
     try {
-                    await saveRowToFirebase(newRow);
-                    alert('Row submitted successfully!');
-                    addRow();
-                    // Only allow adding new rows if the last row is completely filled
-                    const lastRow = tbody.lastElementChild;
-                    if (isRowComplete(lastRow)) {
-                        addRow(); // Add a new row if the last row is filled
-                    }
-                } catch (error) {
-                    console.error('Error saving row to Firestore:', error);
-                    alert('Error saving row, please try again.');
-                }
-            
-    
-    submitBtn.focus();
-    };
+        const snapshot = await projects.orderBy('timestamp', 'asc').get();
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No data available</td></tr>';
+            return;
+        }
 
-    actionCell.appendChild(submitBtn);
-    newRow.appendChild(actionCell);
-    tbody.appendChild(newRow);
-    return newRow;
-
-
-    // Only save initial row if rowData is not provided *****************************************************************************************************************
-    if (!rowData) {
-    try {
-        await saveRowToFirebase(newRow);
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            addRow({
+                id: doc.id,
+                srNo: data.srNo,
+                date: data.date,
+                projectName: data.projectName,
+                subject: data.subject,
+                sentTo: data.sentTo,
+                sentBy: data.sentBy,
+                modeBy: data.modeBy,
+                letterNo: data.letterNo
+            });
+        });
     } catch (error) {
-        console.error('Error saving initial row:', error);
+        console.error("Error fetching data:", error);
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Error loading data. Please refresh the page.</td></tr>';
     }
-    }
-    newRow.cells[0].focus();
-    isAddingRow = false;
-    
-    function createModeBySelect() {
-    const select = document.createElement('select');
-    
-    const defaultOption = document.createElement('option');
-    defaultOption.value = ''; 
-    defaultOption.textContent = '  '; 
-    select.appendChild(defaultOption);
+}
 
-    const options = ['By Hand', 'By Email', 'By Courier'];
-    options.forEach(option => {
-        const opt = document.createElement('option');
-        opt.value = option;
-        opt.textContent = option;
-        select.appendChild(opt);
-    });
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    select.addEventListener('change', function () {
-        const row = this.closest('tr');
-        saveRowToFirebase(row);
-    });
+     function addRow(rowData = null) {
+                    const tbody = document.querySelector('#projectTable tbody');
+                    const newRow = document.createElement('tr');
+                    const rowId = rowData ? rowData.id : Date.now().toString();
+                    newRow.setAttribute('data-id', rowId);
+                    const columns = 8;
 
-    return select;
-    }
-    function validateCurrentRow() {
-    const currentRow = document.querySelector('#projectTable tbody tr:last-child');
-    const inputs = currentRow.querySelectorAll('input');
-    let isValid = true;
+                    for (let i = 0; i < columns; i++) { 
+                        const cell = document.createElement('td');
+                        cell.className = 'editable';
+                        cell.tabIndex = 0;
 
-    inputs.forEach(input => {
-        if (!input.value.trim()) {
-            input.classList.add('warning'); // Highlight empty fields
-            isValid = false;
-        } else {
-            input.classList.remove('warning'); // Remove highlight if filled
+                        switch (i) {
+                            case 0:
+                                cell.textContent = tbody.children.length + 1; // Serial Number
+                                cell.style.textAlign = 'center';
+                                cell.contentEditable = false;
+                                break;
+                            case 1:
+                                cell.textContent = rowData ? rowData.date : ''; // Date will be generated after submission
+                                cell.style.textAlign = 'center';
+                                cell.contentEditable = false;
+                                break;
+                            case 6:
+                                const select = createModeBySelect();
+                                if (rowData) {
+                                    select.value = rowData.modeBy;
+                                }
+                                cell.appendChild(select);
+                                cell.contentEditable = false;
+                                break;
+                            case 7:
+                                cell.textContent = rowData ? rowData.letterNo : ''; // Letter No will be generated after submission
+                                cell.contentEditable = false;
+                                break;
+                            case 3:
+                                cell.contentEditable = true;
+                                if (rowData) {
+                                    cell.textContent = rowData.subject || '';
+                                }
+                                break;
+                            default:
+                                cell.contentEditable = true;
+                                if (rowData) {
+                                    const fields = ['srNo', 'date', 'projectName', 'subject', 'sentTo', 'sentBy', 'modeBy', 'letterNo'];
+                                    cell.textContent = rowData[fields[i]] || '';
+                                }
+                        }
+                        newRow.appendChild(cell);
+                    }
+
+            const actionCell = document.createElement('td');
+            actionCell.style.textAlign = 'center';
+            actionCell.tabIndex = 0;
+
+            const submitBtn = document.createElement('button');
+            submitBtn.textContent = 'Submit 📤';
+            submitBtn.className = 'save-btn';
+
+            submitBtn.onclick = async function () {
+            
+            // Check specific required fields
+            const requiredFields = {
+                'projectName': 2,  // Assuming project name is in column 2
+                'subjectName': 3,  // Assuming subject name is in column 3
+                'sentTo': 4,       // Assuming sent to is in column 4
+                'sentBy': 5,       // Assuming sent by is in column 5
+                'modeBy': 6        // Assuming mode by is in column 6
+            };
+
+            // Check if all required fields are filled
+            // Check if all required fields are filled
+            const missingFields = [];
+            for (const [field, index] of Object.entries(requiredFields)) {
+            if (field === 'modeBy') {
+                // Check the value of the dropdown
+                const modeByValue = newRow.cells[index].querySelector('select').value;
+                if (!modeByValue) {
+                    missingFields.push(field);
+                    newRow.cells[index].querySelector('select').style.border = '2px solid red'; // Highlight dropdown
+                }
+                else{
+                    newRow.cells[index].querySelector('select').style.border = '';
+                    }
+            } else {
+                // Check the text content for other fields
+                const cell = newRow.cells[index];
+                if (!cell || cell.textContent.trim() === '') {
+                    missingFields.push(field);
+                    cell.style.border= '2px solid red'; // Highlight the cell
+                } else {
+                    cell.style.border = ""; // Reset background color if filled
+                }
+            }   
+            }
+
+            if (missingFields.length > 0) {
+            alert(`Please fill in the following fields:\n${missingFields.join('\n')}`);//issue with adding
+            return;
+            }
+
+            // If all required fields are filled, generate letter number and date
+            const letterNo = getLetterNumber(tbody.children.length + 1);
+            const currentDate = getCurrentDate();
+
+            // Update the row with letter number and date
+            newRow.cells[1].textContent = currentDate;  // Set the date
+            newRow.cells[7].textContent = letterNo; 
+
+            function getCurrentDate() {
+            const date = new Date();
+            const dd = String(date.getDate()).padStart(2, '0');
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const yy = date.getFullYear().toString().slice(-2);
+            return `${dd}-${mm}-${yy}`;
+            }
+
+            function getLetterNumber(serialNumber) {
+            const date = new Date();
+            const month = date.getMonth() + 1;
+            const monthStr = String(month).padStart(2, '0');
+            const year = date.getFullYear();
+            const fiscalYear = `${year}-${(year + 1).toString().slice(-2)}`;
+            return `CEINSYS/OPR/${fiscalYear}/${monthStr}/${String(serialNumber).padStart(4, '0')}`;
+            }
+
+            // Set the letter number
+            function isRowComplete(row) {
+            const inputs = row.querySelectorAll('input');
+            let isComplete = true;
+            inputs.forEach(input => {
+            if (!input.value.trim()) {
+            isComplete = false;
+            }
+            });
+            return isComplete;
+            }
+
+//----------------------------------------------------------------------------------------------------------------------------------           
+            try {
+                     saveRowToFirebase(newRow);
+                    console.log('Row saved successfully');
+                    
+                    
+            }
+                    catch (error) {
+                            console.error('Error saving row to Firestore:', error);
+                            alert('Error saving row, please try again.');
+                        }
+                    
+            submitBtn.focus();
+            };
+
+            actionCell.appendChild(submitBtn);
+            newRow.appendChild(actionCell);
+            tbody.appendChild(newRow);
+            return newRow;
+
+
+// Only save initial row if rowData is not provided *****************************************************************************************************************
+            if (!rowData) {
+            try {
+                 saveRowToFirebase(newRow);
+            } catch (error) {
+                console.error('Error saving initial row:', error);
+            }}
+            newRow.cells[0].focus();
+            isAddingRow = false;
+        
+
+            //createmodebyselect fn...->
+
+
+            function createModeBySelect() {
+            const select = document.createElement('select');
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.value = ''; 
+            defaultOption.textContent = '  '; 
+            select.appendChild(defaultOption);
+
+            const options = ['By Hand', 'By Email', 'By Courier'];
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            });
+
+            return select;
+            }
+            
+           
+
+            function validateCurrentRow() {
+            const currentRow = document.querySelector('#projectTable tbody tr:last-child');
+            const inputs = currentRow.querySelectorAll('input');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('warning'); // Highlight empty fields
+                    isValid = false;
+                } else {
+                    input.classList.remove('warning'); // Remove highlight if filled
+                }
+            });
+
+            return isValid;
+            }
         }
-    });
-
-    return isValid;
-    }
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        
     async function saveRowToFirebase(row) {
-    const rowId = row.getAttribute('data-id');
+    const rowId = row.getAttribute('data-id'); // Get the unique ID of the row
     const rowData = {
         srNo: row.cells[0].textContent,
         date: row.cells[1].textContent,
@@ -565,178 +594,139 @@ tr:nth-child(even) {
         sentBy: row.cells[5].textContent,
         modeBy: row.cells[6].querySelector('select').value,
         letterNo: row.cells[7].textContent,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        timestamp: firebase.firestore.FieldValue.serverTimestamp() // automatically generate timestamp on server
     };
 
     try {
-        await projectsCollection.doc(rowId).set(rowData);
-    } catch (error) {
-        console.error("Error saving to Firebase:", error);
-        alert("Error saving data. Please try again.");
-    }}
+        await projects.doc(rowId).set(rowData); // Save to Firestore
+       
+        alert('Data saved successfully');
 
-    //need chnges here asap loading issue....
-    async function loadDataFromFirebase() {
-    try {
-        const snapshot = await projectsCollection.orderBy('timestamp').get();
-        isLoading = true;
+        updateRowInTable(rowId, rowData);
 
+    } 
+    catch (error) {
+        console.error('Error saving row to Firestore:', error);
+        alert('Error saving row, please try again.');
+    }
+}   
+     
+    function updateRowInTable(rowId, rowData) {
+    const row = document.querySelector(`[data-id='${rowId}']`);
+    if (row) {
+        row.cells[0].textContent = rowData.srNo;
+        row.cells[1].textContent = rowData.date;
+        row.cells[2].textContent = rowData.projectName;
+        row.cells[3].textContent = rowData.subject;
+        row.cells[4].textContent = rowData.sentTo;
+        row.cells[5].textContent = rowData.sentBy;
+        row.cells[6].querySelector('select').value = rowData.modeBy;
+        row.cells[7].textContent = rowData.letterNo;
+    }
+    else {
+        // If the row doesn't exist, log an error (or create the row if needed)
+        console.error('Row not found for ID: ', rowId);
+    }
+    }
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            function openUserProfile() {
+                // You can redirect the user to the profile page or show a profile menu
+                alert("Open user profile or login page.");
+            }
+
+
+        //delte function all 
+
+        async function deleteAllRows() {
+        if (!confirm('Are you sure you want to delete ALL rows? This action cannot be undone.')) {
+            return;
+        }
 
         const tableBody = document.querySelector('#projectTable tbody');
-        if (!tableBody) {
-            throw new Error('Table body element not found');
-        }
-        tableBody.innerHTML = '';
+        
+        try {
+            // Show loading state
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Deleting all rows...</td></tr>';
+            
+            // Get all documents
+            const snapshot = await projects.get();
+            
+            // Delete each document
+            const batch = db.batch();
+            snapshot.docs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            
+            // Commit the batch delete
+            await batch.commit();
+            
+            // Clear the table
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">All rows deleted successfully</td></tr>';
+            
+            // Reload the table after a short delay
+            
+            
+            } catch (error) {
+            console.error("Error deleting all rows:", error);
+            alert('Error deleting rows. Please try again.');
+            loadDataFromFirebase(); // Reload the table to show current state
+            }}
+ 
 
-        // Reverse order to show newer data at the bottom
-        const data = [];
-        snapshot.forEach(doc => {
-            data.push({ id: doc.id, ...doc.data() });
+
+//account opening -------------------------------------------------------------------------------------------------------------------------------
+
+
+            function openOverlay() {
+                    document.getElementById('userOverlay').style.display = 'flex';
+                    document.getElementById('adminButton').style.display = 'none';
+                }
+
+                // Function to close the overlay
+                function closeOverlay(event) {
+                    // If the overlay itself (not the content) is clicked, close it
+                    if (event) {
+                        event.stopPropagation(); // Prevent this click from propagating further
+                    }
+                    document.getElementById('userOverlay').style.display = 'none';
+                    document.getElementById('adminButton').style.display = 'block'; // Show the admin button again
+                }
+
+
+                // Simulate Sign Out (Replace with Firebase or your authentication logic)
+                function signOut() {
+                    alert('You have signed out!');
+                    closeOverlay(); // Close overlay on sign-out
+                }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Add delete all button to the page
+            const deleteAllButton = document.createElement('button');
+            deleteAllButton.textContent = 'Delete All Rows';
+            deleteAllButton.className = 'delete-all-btn';
+            deleteAllButton.onclick = deleteAllRows;
+        
+            // Add the button to your desired location (modify as needed)
+            const buttonContainer = document.querySelector('#buttonContainer'); // Create this div in your HTML
+            if (buttonContainer) {
+            buttonContainer.appendChild(deleteAllButton);
+            }
+
+        // Load initial data
+        loadDataFromFirebase();
+
+        // Set up real-time updates
+        projects.onSnapshot((snapshot) => {
+            loadDataFromFirebase();
+        }, (error) => {
+            console.error("Error setting up real-time updates:", error);
         });
-
-        data.reverse().forEach(item => {
-            addRow(item);
         });
-    } catch (error) {
-        console.error("Error loading data from Firebase:", error);
-        alert("Error loading data. Please refresh the page.");
-    }
-    }
+        window.addEventListener('load',loadDataFromFirebase)   
 
-    // Delete All Rows Function
-async function deleteAllRows() {
-    const tbody = document.querySelector('#projectTable tbody');
-    const rows = Array.from(tbody.children);
-    
-    // Confirm before deleting all rows
-    if (rows.length === 0) {
-        alert("No rows to delete.");
-        return;
-    }
-    
-    const rowIds = rows.map(row => row.getAttribute('data-id'));
-    
-    // Delete from Firebase
-    for (const rowId of rowIds) {
-        await deleteRowFromFirebase(rowId);
-    }
-    
-    // Remove rows from the table (UI)
-    tbody.innerHTML = ''; 
-}
 
-// Function to delete a single row from Firebase
-async function deleteRowFromFirebase(rowId) {
-    try {
-        await projectsCollection.doc(rowId).delete();
-        console.log(`Row ${rowId} deleted from Firebase`);
-    } catch (error) {
-        console.error(`Error deleting row ${rowId}:`, error);
-    }
-}
-
-    
-    function getCurrentDate() {
-    const date = new Date();
-    const dd = String(date.getDate()).padStart(2, '0');
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const yy = date.getFullYear().toString().slice(-2);
-    return `${dd}-${mm}-${yy}`;
-    }
-
-    
-    function getLetterNumber(serialNumber) {
-    const date = new Date();
-    const month = date.getMonth() + 1;
-    const monthStr = String(month).padStart(2, '0');
-    const year = date.getFullYear();
-    const fiscalYear = `${year}-${(year + 1).toString().slice(-2)}`;
-    return `CEINSYS/OPR/${fiscalYear}/${monthStr}/${String(serialNumber).padStart(4, '0')}`;
-    }
-    function openUserProfile() {
-        // You can redirect the user to the profile page or show a profile menu
-        alert("Open user profile or login page.");
-    }
-
-    function handleKeyNavigation(e, element) {
-    const row = element.closest('tr');
-    const cells = Array.from(row.cells);
-    const currentIndex = cells.indexOf(element);
-
-    switch (e.key) {
-        case 'ArrowRight':
-            if (currentIndex < cells.length - 1) {
-                cells[currentIndex + 1].focus();
-                e.preventDefault();
-            }
-            break;
-        case 'ArrowLeft':
-            if (currentIndex > 0) {
-                cells[currentIndex - 1].focus();
-                e.preventDefault();
-            }
-            break;
-        case 'ArrowDown':
-            const nextRow = row.nextElementSibling;
-            if (nextRow) {
-                nextRow.cells[currentIndex].focus();
-            } else {
-                addRow();
-            }
-            e.preventDefault();
-            break;
-        case 'ArrowUp':
-            const prevRow = row.previousElementSibling;
-            if (prevRow) {
-                prevRow.cells[currentIndex].focus();
-            }
-            e.preventDefault();
-            break;
-    }}
-
-    document.addEventListener('keydown', function (e) {
-    const target = e.target;
-    if (target.matches('.editable') || target.matches('select')) {
-        handleKeyNavigation(e, target.matches('select') ? target.parentElement : target);
-    }
-    });
-    
-    document.addEventListener('DOMContentLoaded', function () {
-    const table = document.getElementById('projectTable');
-
-    table.addEventListener('keydown', handleKeyNavigation);
-    setupTableEventListeners();
-
-    table.addEventListener('click', function (e) {
-        const cell = e.target.closest('td');
-        if (cell) {
-            cell.focus();
-        }
-    });
-
-    table.addEventListener('blur', function (e) {
-        const cell = e.target.closest('td');
-        if (cell && cell.contentEditable === 'true') {
-            const row = cell.closest('tr');
-            saveRowToFirebase(row);
-        }
-    }, true);
-
-    const firstCell = table.querySelector('tbody tr:first-child td:first-child');
-    if (firstCell) {
-        firstCell.focus();
-    }
-    });
-
-    actionCell.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') { // Allow Enter and Space to click the button
-        e.preventDefault();
-        submitBtn.click();
-    }
-    });
-
-    window.addEventListener('load', loadDataFromFirebase())
-    }
-</script>
+//-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------            
+    </script>
 </body>
 </html>
